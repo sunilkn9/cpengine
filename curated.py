@@ -1,11 +1,13 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
+from snowflake.helper import sfOptions
 
 def sales_analysis():
     # Create a SparkSession with Hive support
     spark = SparkSession.builder \
         .appName("Sales Analysis") \
         .enableHiveSupport() \
+        .config('spark.jars.packages','net.snowflake:snowflake-jdbc:3.13.23,net.snowflake:spark-snowflake_2.12:2.11.0-spark_3.3')\
         .getOrCreate()
 
     # Read the product dataset
@@ -66,9 +68,13 @@ def sales_analysis():
     average_revenue_per_day.write.mode("overwrite").json("hdfs://localhost:9000/average_revenue_per_day")
     revenue_per_month_df.write.mode("overwrite").json("hdfs://localhost:9000/revenue_per_month_df")
     revenue_per_month_per_year_df.write.mode("overwrite").json("hdfs://localhost:9000/revenue_per_month_per_year_df")
+    revenue_per_month_per_year_df.write.format("snowflake").options(**sfOptions) \
+        .option("dbtable", "{}".format(r"raw_layer")).mode("overwrite").options(header=True).save()
 
     # Save DataFrames to Hive tables
     average_revenue_per_day.write.mode("overwrite").saveAsTable("average_revenue_per_day")
+    average_revenue_per_day.write.format("snowflake").options(**sfOptions) \
+        .option("dbtable", "{}".format(r"raw_layer")).mode("overwrite").options(header=True).save()
     revenue_per_month_df.write.mode("overwrite").saveAsTable("average_revenue_per_month")
     revenue_per_month_per_year_df.write.mode("overwrite").saveAsTable("revenue_per_month_per_year")
 
