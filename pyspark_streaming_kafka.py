@@ -10,7 +10,7 @@ os.environ['PYSPARK_SUBMIT_ARGS'] = '--packages org.apache.spark:spark-streaming
 kafka_topic = "kafkahdfs"
 kafka_server = "localhost:9092"
 csv_file = r"C:\Users\sunil.kn\Downloads\salesdataset\AdventureWorksCustomers-210509-235702.csv"
-output_path = "hdfs://localhost:9000/kafa_output"
+output_path = "hdfs://localhost:9000/kafka_output"
 
 
 def process_csv_to_hdfs():
