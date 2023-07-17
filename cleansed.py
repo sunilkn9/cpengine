@@ -1,12 +1,14 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, sha2
 from pyspark.sql.types import StringType
+from snowflake.helper import sfOptions
 
 def transform_and_save_to_hive_hdfs():
     # Create a SparkSession with Hive support
     spark = SparkSession.builder \
         .appName("DataFrame Transformations Example") \
         .enableHiveSupport() \
+        .config('spark.jars.packages','net.snowflake:snowflake-jdbc:3.13.23,net.snowflake:spark-snowflake_2.12:2.11.0-spark_3.3')\
         .getOrCreate()
 
     # Read the JSON file into a DataFrame
@@ -30,6 +32,8 @@ def transform_and_save_to_hive_hdfs():
     hashed_df.write.mode("overwrite").format("hive").saveAsTable(hive_table)
     hdfs_output_path = "hdfs://localhost:9000/cleansed"
     hashed_df.write.mode("overwrite").json(hdfs_output_path)
+    hashed_df.write.format("snowflake").options(**sfOptions) \
+        .option("dbtable", "{}".format(r"raw_layer")).mode("overwrite").options(header=True).save()
 
     # Stop the SparkSession
     spark.stop()
