@@ -1,13 +1,17 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
+from snowflake.helper import sfOptions
 
 def transform_and_output_to_hdfs():
     # Create a SparkSession with Hive support
     spark = SparkSession.builder \
         .appName("DataFrame Transformations Example") \
         .enableHiveSupport() \
+        .config('spark.jars.packages','net.snowflake:snowflake-jdbc:3.13.23,net.snowflake:spark-snowflake_2.12:2.11.0-spark_3.3')\
         .getOrCreate()
+
+
 
     # Read multiple JSON files into a DataFrame
     json_file = "hdfs://localhost:9000/kafka_output"
@@ -30,6 +34,9 @@ def transform_and_output_to_hdfs():
     # Output the transformed DataFrame to HDFS in JSON format
     output_path = "hdfs://localhost:9000/rawlayer"
     df_with_null_check.write.mode("overwrite").json(output_path)
+
+    df_with_null_check.write.format("snowflake").options(**sfOptions) \
+        .option("dbtable", "{}".format(r"raw_layer")).mode("overwrite").options(header=True).save()
 
     # Stop the SparkSession
     spark.stop()
